@@ -1,0 +1,13 @@
+{
+  "name": "x-growth-bot-backend",
+  "version": "1.0.0",
+  "description": "Backend API proxy for X Growth Bot",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
