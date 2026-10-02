@@ -1,0 +1,566 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <!-- Core metadata -->
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  >
+
+  <meta
+    name="description"
+    content="X Growth Bot helps discover relevant conversations and prepare thoughtful responses across crypto, Web3, Base, AI, and DeFi."
+  >
+
+  <meta name="theme-color" content="#050505">
+
+  <title>X Growth Bot — Discover Better Conversations</title>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Preconnect for future integrations -->
+  <link rel="preconnect" href="https://x.com">
+
+  <!-- Prevent broken navigation before JavaScript is added -->
+  <script>
+    document.documentElement.classList.add("js");
+  </script>
+</head>
+
+<body>
+
+  <a
+    class="skip-link"
+    href="#main-content"
+  >
+    Skip to main content
+  </a>
+
+
+  <div class="app">
+
+    <!-- ==================================================
+         HEADER
+         ================================================== -->
+
+    <header class="site-header">
+
+      <div class="container header-inner">
+
+        <a
+          class="brand"
+          href="/"
+          aria-label="X Growth Bot home"
+        >
+
+          <span
+            class="brand-mark"
+            aria-hidden="true"
+          >
+            X
+          </span>
+
+          <span class="brand-name">
+            Growth Bot
+          </span>
+
+        </a>
+
+
+        <div
+          class="system-status"
+          aria-label="Application status"
+        >
+
+          <span
+            class="status-indicator"
+            aria-hidden="true"
+          ></span>
+
+          <span>
+            Assistant ready
+          </span>
+
+        </div>
+
+      </div>
+
+    </header>
+
+
+    <!-- ==================================================
+         MAIN
+         ================================================== -->
+
+    <main id="main-content">
+
+      <!-- ==================================================
+           HERO
+           ================================================== -->
+
+      <section class="hero">
+
+        <div class="container hero-inner">
+
+          <p class="eyebrow">
+            X ENGAGEMENT ASSISTANT
+          </p>
+
+          <h1>
+            Find conversations<br>
+            <span>worth joining.</span>
+          </h1>
+
+          <p class="hero-description">
+            Discover relevant conversations across crypto,
+            Web3, Base, AI, and emerging communities.
+          </p>
+
+        </div>
+
+      </section>
+
+
+      <!-- ==================================================
+           DISCOVERY
+           ================================================== -->
+
+      <section
+        class="discovery"
+        aria-labelledby="discovery-title"
+      >
+
+        <div class="container">
+
+          <div class="discovery-panel">
+
+            <div class="panel-header">
+
+              <div>
+
+                <p class="section-label">
+                  DISCOVERY
+                </p>
+
+                <h2 id="discovery-title">
+                  Find relevant conversations
+                </h2>
+
+              </div>
+
+            </div>
+
+
+            <form
+              id="search-form"
+              class="search-form"
+              novalidate
+            >
+
+              <!-- Topic -->
+
+              <div class="field">
+
+                <label for="topic">
+                  Topic
+                </label>
+
+                <select id="topic" name="topic">
+
+                  <option value="crypto">
+                    Crypto
+                  </option>
+
+                  <option value="web3">
+                    Web3
+                  </option>
+
+                  <option value="base">
+                    Base
+                  </option>
+
+                  <option value="defi">
+                    DeFi
+                  </option>
+
+                  <option value="ai">
+                    AI
+                  </option>
+
+                  <option value="memecoin">
+                    Memecoin
+                  </option>
+
+                </select>
+
+              </div>
+
+
+              <!-- Keyword -->
+
+              <div class="field field-expanded">
+
+                <label for="keyword">
+                  Keyword
+                </label>
+
+                <input
+                  id="keyword"
+                  name="keyword"
+                  type="search"
+                  placeholder="Search a topic or keyword..."
+                  autocomplete="off"
+                  spellcheck="false"
+                >
+
+              </div>
+
+
+              <!-- Submit -->
+
+              <button
+                id="search-button"
+                class="button button-primary"
+                type="submit"
+              >
+                <span>
+                  Search
+                </span>
+              </button>
+
+            </form>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- ==================================================
+           OPPORTUNITIES
+           ================================================== -->
+
+      <section
+        class="opportunities"
+        aria-labelledby="opportunities-title"
+      >
+
+        <div class="container">
+
+          <div class="section-header">
+
+            <div>
+
+              <p class="section-label">
+                OPPORTUNITIES
+              </p>
+
+              <h2 id="opportunities-title">
+                Conversations
+              </h2>
+
+            </div>
+
+
+            <div
+              id="result-count"
+              class="result-count"
+              aria-live="polite"
+            >
+              0 results
+            </div>
+
+          </div>
+
+
+          <!-- Loading state -->
+
+          <div
+            id="loading-state"
+            class="state state-loading"
+            hidden
+            aria-live="polite"
+            aria-busy="true"
+          >
+
+            <span
+              class="loading-indicator"
+              aria-hidden="true"
+            ></span>
+
+            <span>
+              Finding relevant conversations...
+            </span>
+
+          </div>
+
+
+          <!-- Conversation list -->
+
+          <div
+            id="conversation-list"
+            class="conversation-list"
+            aria-live="polite"
+          >
+            <!--
+              Conversation cards will be rendered
+              by script.js.
+            -->
+          </div>
+
+
+          <!-- Empty state -->
+
+          <div
+            id="empty-state"
+            class="state state-empty"
+            hidden
+          >
+
+            <div
+              class="state-icon"
+              aria-hidden="true"
+            >
+              —
+            </div>
+
+            <h3>
+              No conversations found
+            </h3>
+
+            <p>
+              Try a different topic or keyword.
+            </p>
+
+          </div>
+
+
+          <!-- Error state -->
+
+          <div
+            id="error-state"
+            class="state state-error"
+            hidden
+            role="alert"
+          >
+
+            <h3>
+              Something went wrong
+            </h3>
+
+            <p id="error-message">
+              We couldn't load conversations.
+            </p>
+
+            <button
+              id="retry-button"
+              class="button button-secondary"
+              type="button"
+            >
+              Try again
+            </button>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- ==================================================
+           WORKFLOW
+           ================================================== -->
+
+      <section
+        class="workflow"
+        aria-labelledby="workflow-title"
+      >
+
+        <div class="container">
+
+          <div class="section-header">
+
+            <div>
+
+              <p class="section-label">
+                WORKFLOW
+              </p>
+
+              <h2 id="workflow-title">
+                Built around human judgment
+              </h2>
+
+            </div>
+
+          </div>
+
+
+          <div class="workflow-grid">
+
+            <article class="workflow-card">
+
+              <span
+                class="workflow-number"
+                aria-hidden="true"
+              >
+                01
+              </span>
+
+              <h3>
+                Discover
+              </h3>
+
+              <p>
+                Surface conversations related to the
+                topics you care about.
+              </p>
+
+            </article>
+
+
+            <article class="workflow-card">
+
+              <span
+                class="workflow-number"
+                aria-hidden="true"
+              >
+                02
+              </span>
+
+              <h3>
+                Review
+              </h3>
+
+              <p>
+                Evaluate context and relevance before
+                deciding whether to engage.
+              </p>
+
+            </article>
+
+
+            <article class="workflow-card">
+
+              <span
+                class="workflow-number"
+                aria-hidden="true"
+              >
+                03
+              </span>
+
+              <h3>
+                Draft
+              </h3>
+
+              <p>
+                Use AI assistance to prepare a concise,
+                context-aware response.
+              </p>
+
+            </article>
+
+
+            <article class="workflow-card">
+
+              <span
+                class="workflow-number"
+                aria-hidden="true"
+              >
+                04
+              </span>
+
+              <h3>
+                Engage
+              </h3>
+
+              <p>
+                Review the final response and remain in
+                control of the interaction.
+              </p>
+
+            </article>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- ==================================================
+           PRINCIPLES
+           ================================================== -->
+
+      <section
+        class="principles"
+        aria-labelledby="principles-title"
+      >
+
+        <div class="container">
+
+          <div class="principles-panel">
+
+            <div>
+
+              <p class="section-label">
+                PRODUCT PRINCIPLE
+              </p>
+
+              <h2 id="principles-title">
+                Relevance over volume.
+              </h2>
+
+            </div>
+
+            <p>
+              X Growth Bot is designed to help users discover
+              meaningful conversations rather than maximize
+              automated activity.
+            </p>
+
+          </div>
+
+        </div>
+
+      </section>
+
+    </main>
+
+
+    <!-- ==================================================
+         FOOTER
+         ================================================== -->
+
+    <footer class="site-footer">
+
+      <div class="container footer-inner">
+
+        <div>
+          <strong>
+            X Growth Bot
+          </strong>
+        </div>
+
+        <p>
+          Discover better conversations. Engage with intent.
+        </p>
+
+      </div>
+
+    </footer>
+
+  </div>
+
+
+  <!-- Application logic -->
+  <script
+    src="script.js"
+    defer
+  ></script>
+
+</body>
+</html>
