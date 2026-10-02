@@ -1,1 +1,5 @@
+name = "xai-growth-bot"
 
+main = "src/index.js"
+
+compatibility_date = "2026-10-02"
