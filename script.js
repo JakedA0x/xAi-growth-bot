@@ -5,7 +5,7 @@
  * Frontend application logic
  *
  * Current stage:
- * - Local mock data
+ * - Mock conversation data
  * - Topic filtering
  * - Keyword search
  * - Relevance scoring
@@ -33,7 +33,7 @@ const CONVERSATIONS = [
       avatar: "AM"
     },
     topic: "crypto",
-    tags: ["crypto", "market"],
+    tags: ["crypto", "market", "bitcoin"],
     content:
       "What narratives do you think will drive the next phase of the crypto market?",
     engagement: {
@@ -229,7 +229,7 @@ function init() {
 
   bindEvents();
 
-  state.topic = elements.topic.value;
+  state.topic = normalizeTopic(elements.topic.value);
   state.keyword = elements.keyword.value.trim();
 
   performSearch();
@@ -266,20 +266,29 @@ function bindEvents() {
 function handleSearchSubmit(event) {
   event.preventDefault();
 
-  state.topic = elements.topic.value;
-  state.keyword = elements.keyword.value.trim();
+  state.topic = normalizeTopic(
+    elements.topic.value
+  );
+
+  state.keyword =
+    elements.keyword.value.trim();
 
   performSearch();
 }
 
 
 function handleTopicChange() {
-  state.topic = elements.topic.value;
+  state.topic = normalizeTopic(
+    elements.topic.value
+  );
+
+  performSearch();
 }
 
 
 function handleKeywordInput() {
-  state.keyword = elements.keyword.value.trim();
+  state.keyword =
+    elements.keyword.value.trim();
 }
 
 
@@ -301,15 +310,15 @@ async function performSearch() {
   try {
     /*
      * Simulate network latency.
-     *
      * This will later be replaced with an API request.
      */
     await delay(500);
 
-    const filteredResults = searchConversations({
-      topic: state.topic,
-      keyword: state.keyword
-    });
+    const filteredResults =
+      searchConversations({
+        topic: state.topic,
+        keyword: state.keyword
+      });
 
     state.results = filteredResults;
 
@@ -333,24 +342,31 @@ async function performSearch() {
    07. SEARCH ENGINE
    ========================================================= */
 
-function searchConversations({ topic, keyword }) {
+function searchConversations({
+  topic,
+  keyword
+}) {
   const normalizedTopic =
-    String(topic || "")
-      .trim()
-      .toLowerCase();
+    normalizeTopic(topic);
 
   const normalizedKeyword =
     String(keyword || "")
       .trim()
       .toLowerCase();
 
+  const showAllTopics =
+    !normalizedTopic ||
+    normalizedTopic === "all" ||
+    normalizedTopic === "all-topics";
+
   return CONVERSATIONS
     .map((conversation) => {
-      const score = calculateRelevance(
-        conversation,
-        normalizedTopic,
-        normalizedKeyword
-      );
+      const score =
+        calculateRelevance(
+          conversation,
+          normalizedTopic,
+          normalizedKeyword
+        );
 
       return {
         ...conversation,
@@ -359,6 +375,7 @@ function searchConversations({ topic, keyword }) {
     })
     .filter((conversation) => {
       const matchesTopic =
+        showAllTopics ||
         conversation.topic === normalizedTopic;
 
       const matchesKeyword =
@@ -368,7 +385,10 @@ function searchConversations({ topic, keyword }) {
           normalizedKeyword
         );
 
-      return matchesTopic && matchesKeyword;
+      return (
+        matchesTopic &&
+        matchesKeyword
+      );
     })
     .sort(
       (a, b) =>
@@ -389,21 +409,25 @@ function calculateRelevance(
 ) {
   let score = 0;
 
-  if (conversation.topic === topic) {
+  const showAllTopics =
+    !topic ||
+    topic === "all" ||
+    topic === "all-topics";
+
+  if (
+    showAllTopics ||
+    conversation.topic === topic
+  ) {
     score += 50;
   }
 
   if (keyword) {
-    const searchableText = [
-      conversation.content,
-      conversation.author.name,
-      conversation.author.handle,
-      ...conversation.tags
-    ]
-      .join(" ")
-      .toLowerCase();
+    const searchableText =
+      getSearchableText(conversation);
 
-    if (searchableText.includes(keyword)) {
+    if (
+      searchableText.includes(keyword)
+    ) {
       score += 30;
     }
 
@@ -413,7 +437,9 @@ function calculateRelevance(
         .filter(Boolean);
 
     keywordParts.forEach((part) => {
-      if (searchableText.includes(part)) {
+      if (
+        searchableText.includes(part)
+      ) {
         score += 5;
       }
     });
@@ -433,29 +459,86 @@ function calculateRelevance(
     Math.round(engagement / 50)
   );
 
-  return Math.min(score, 100);
+  return Math.min(
+    score,
+    100
+  );
 }
 
+
+/* =========================================================
+   09. KEYWORD SEARCH
+   ========================================================= */
 
 function matchesKeywordSearch(
   conversation,
   keyword
 ) {
-  const searchableText = [
-    conversation.content,
-    conversation.author.name,
-    conversation.author.handle,
-    ...conversation.tags
-  ]
-    .join(" ")
-    .toLowerCase();
+  const searchableText =
+    getSearchableText(
+      conversation
+    );
 
-  return searchableText.includes(keyword);
+  /*
+   * Exact phrase match.
+   */
+  if (
+    searchableText.includes(keyword)
+  ) {
+    return true;
+  }
+
+  /*
+   * Also support multiple words.
+   *
+   * Example:
+   * "crypto market"
+   *
+   * Both words must exist.
+   */
+  const parts =
+    keyword
+      .split(/\s+/)
+      .filter(Boolean);
+
+  if (parts.length > 1) {
+    return parts.every((part) =>
+      searchableText.includes(part)
+    );
+  }
+
+  return false;
 }
 
 
 /* =========================================================
-   09. RENDERING
+   10. SEARCH HELPERS
+   ========================================================= */
+
+function getSearchableText(
+  conversation
+) {
+  return [
+    conversation.content,
+    conversation.author.name,
+    conversation.author.handle,
+    conversation.topic,
+    ...conversation.tags
+  ]
+    .join(" ")
+    .toLowerCase();
+}
+
+
+function normalizeTopic(topic) {
+  return String(topic || "")
+    .trim()
+    .toLowerCase();
+}
+
+
+/* =========================================================
+   11. RENDERING
    ========================================================= */
 
 function renderResults() {
@@ -465,7 +548,9 @@ function renderResults() {
     state.results.length
   );
 
-  if (state.results.length === 0) {
+  if (
+    state.results.length === 0
+  ) {
     showEmptyState();
     return;
   }
@@ -475,11 +560,15 @@ function renderResults() {
   const fragment =
     document.createDocumentFragment();
 
-  state.results.forEach((conversation) => {
-    fragment.appendChild(
-      createConversationCard(conversation)
-    );
-  });
+  state.results.forEach(
+    (conversation) => {
+      fragment.appendChild(
+        createConversationCard(
+          conversation
+        )
+      );
+    }
+  );
 
   elements.conversationList.appendChild(
     fragment
@@ -488,14 +577,16 @@ function renderResults() {
 
 
 /* =========================================================
-   10. CONVERSATION CARD
+   12. CONVERSATION CARD
    ========================================================= */
 
 function createConversationCard(
   conversation
 ) {
   const article =
-    document.createElement("article");
+    document.createElement(
+      "article"
+    );
 
   article.className =
     "conversation-card";
@@ -504,19 +595,25 @@ function createConversationCard(
     conversation.id;
 
   const header =
-    document.createElement("div");
+    document.createElement(
+      "div"
+    );
 
   header.className =
     "conversation-card-header";
 
   const author =
-    document.createElement("div");
+    document.createElement(
+      "div"
+    );
 
   author.className =
     "conversation-author";
 
   const avatar =
-    document.createElement("span");
+    document.createElement(
+      "span"
+    );
 
   avatar.className =
     "conversation-avatar";
@@ -530,16 +627,22 @@ function createConversationCard(
   );
 
   const authorInfo =
-    document.createElement("div");
+    document.createElement(
+      "div"
+    );
 
   const authorName =
-    document.createElement("strong");
+    document.createElement(
+      "strong"
+    );
 
   authorName.textContent =
     conversation.author.name;
 
   const handle =
-    document.createElement("span");
+    document.createElement(
+      "span"
+    );
 
   handle.textContent =
     conversation.author.handle;
@@ -555,7 +658,9 @@ function createConversationCard(
   );
 
   const age =
-    document.createElement("time");
+    document.createElement(
+      "time"
+    );
 
   age.textContent =
     conversation.age;
@@ -570,7 +675,9 @@ function createConversationCard(
 
 
   const content =
-    document.createElement("p");
+    document.createElement(
+      "p"
+    );
 
   content.className =
     "conversation-content";
@@ -580,14 +687,18 @@ function createConversationCard(
 
 
   const footer =
-    document.createElement("div");
+    document.createElement(
+      "div"
+    );
 
   footer.className =
     "conversation-card-footer";
 
 
   const metrics =
-    document.createElement("div");
+    document.createElement(
+      "div"
+    );
 
   metrics.className =
     "conversation-metrics";
@@ -597,10 +708,12 @@ function createConversationCard(
       "Replies",
       conversation.engagement.replies
     ),
+
     createMetric(
       "Likes",
       conversation.engagement.likes
     ),
+
     createMetric(
       "Reposts",
       conversation.engagement.reposts
@@ -609,7 +722,9 @@ function createConversationCard(
 
 
   const relevance =
-    document.createElement("span");
+    document.createElement(
+      "span"
+    );
 
   relevance.className =
     "conversation-relevance";
@@ -635,7 +750,7 @@ function createConversationCard(
 
 
 /* =========================================================
-   11. METRICS
+   13. METRICS
    ========================================================= */
 
 function createMetric(
@@ -643,7 +758,9 @@ function createMetric(
   value
 ) {
   const metric =
-    document.createElement("span");
+    document.createElement(
+      "span"
+    );
 
   metric.className =
     "conversation-metric";
@@ -667,57 +784,106 @@ function formatNumber(value) {
 
 
 /* =========================================================
-   12. UI STATE
+   14. UI STATE
    ========================================================= */
 
-function setLoading(isLoading) {
-  state.isLoading = isLoading;
+function setLoading(
+  isLoading
+) {
+  state.isLoading =
+    isLoading;
 
-  if (elements.loadingState) {
+  if (
+    elements.loadingState
+  ) {
     elements.loadingState.hidden =
       !isLoading;
   }
 
-  if (elements.searchButton) {
+  if (
+    elements.searchButton
+  ) {
     elements.searchButton.disabled =
       isLoading;
   }
 
   if (isLoading) {
-    elements.emptyState.hidden = true;
-    elements.errorState.hidden = true;
+    if (
+      elements.emptyState
+    ) {
+      elements.emptyState.hidden =
+        true;
+    }
+
+    if (
+      elements.errorState
+    ) {
+      elements.errorState.hidden =
+        true;
+    }
   }
 }
 
 
 function showEmptyState() {
-  elements.emptyState.hidden = false;
+  if (
+    elements.emptyState
+  ) {
+    elements.emptyState.hidden =
+      false;
+  }
 }
 
 
 function hideEmptyState() {
-  elements.emptyState.hidden = true;
+  if (
+    elements.emptyState
+  ) {
+    elements.emptyState.hidden =
+      true;
+  }
 }
 
 
-function updateResultCount(count) {
-  elements.resultCount.textContent =
-    `${count} ${count === 1 ? "result" : "results"}`;
+function updateResultCount(
+  count
+) {
+  if (
+    elements.resultCount
+  ) {
+    elements.resultCount.textContent =
+      `${count} ${
+        count === 1
+          ? "result"
+          : "results"
+      }`;
+  }
 }
 
 
 /* =========================================================
-   13. ERROR HANDLING
+   15. ERROR HANDLING
    ========================================================= */
 
-function handleError(message) {
-  state.hasError = true;
+function handleError(
+  message
+) {
+  state.hasError =
+    true;
 
-  elements.errorMessage.textContent =
-    message;
+  if (
+    elements.errorMessage
+  ) {
+    elements.errorMessage.textContent =
+      message;
+  }
 
-  elements.errorState.hidden =
-    false;
+  if (
+    elements.errorState
+  ) {
+    elements.errorState.hidden =
+      false;
+  }
 
   elements.conversationList.replaceChildren();
 
@@ -726,33 +892,43 @@ function handleError(message) {
 
 
 function clearError() {
-  state.hasError = false;
+  state.hasError =
+    false;
 
-  elements.errorState.hidden =
-    true;
+  if (
+    elements.errorState
+  ) {
+    elements.errorState.hidden =
+      true;
+  }
 }
 
 
 /* =========================================================
-   14. UTILITIES
+   16. UTILITIES
    ========================================================= */
 
-function delay(milliseconds) {
-  return new Promise((resolve) => {
-    window.setTimeout(
-      resolve,
-      milliseconds
-    );
-  });
+function delay(
+  milliseconds
+) {
+  return new Promise(
+    (resolve) => {
+      window.setTimeout(
+        resolve,
+        milliseconds
+      );
+    }
+  );
 }
 
 
 /* =========================================================
-   15. START APPLICATION
+   17. START APPLICATION
    ========================================================= */
 
 if (
-  document.readyState === "loading"
+  document.readyState ===
+  "loading"
 ) {
   document.addEventListener(
     "DOMContentLoaded",
