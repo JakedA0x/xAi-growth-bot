@@ -4,183 +4,16 @@
  * X Growth Bot
  * Frontend application logic
  *
- * Current stage:
- * - Mock conversation data
- * - Topic filtering
- * - Keyword search
- * - Relevance scoring
- * - Loading state
- * - Empty state
- * - Error state
- *
- * Future:
- * - X API integration
- * - AI-assisted response drafting
- * - Analytics
+ * Data source:
+ * Cloudflare Worker API
  */
 
-
-/* =========================================================
-   01. MOCK DATA
-   ========================================================= */
-
-const CONVERSATIONS = [
-  {
-    id: "conv-001",
-    author: {
-      name: "Alex Morgan",
-      handle: "@alexmorgan",
-      avatar: "AM"
-    },
-    topic: "crypto",
-    tags: ["crypto", "market", "bitcoin"],
-    content:
-      "What narratives do you think will drive the next phase of the crypto market?",
-    engagement: {
-      replies: 24,
-      likes: 186,
-      reposts: 31
-    },
-    age: "18m"
-  },
-
-  {
-    id: "conv-002",
-    author: {
-      name: "Base Builder",
-      handle: "@basebuilder",
-      avatar: "BB"
-    },
-    topic: "base",
-    tags: ["base", "builders", "ethereum"],
-    content:
-      "Building on Base has become significantly easier. What tools are developers using most right now?",
-    engagement: {
-      replies: 18,
-      likes: 142,
-      reposts: 27
-    },
-    age: "32m"
-  },
-
-  {
-    id: "conv-003",
-    author: {
-      name: "DeFi Research",
-      handle: "@defiresearch",
-      avatar: "DR"
-    },
-    topic: "defi",
-    tags: ["defi", "liquidity", "yield"],
-    content:
-      "Which DeFi primitives do you think still have the most room for innovation?",
-    engagement: {
-      replies: 42,
-      likes: 231,
-      reposts: 38
-    },
-    age: "47m"
-  },
-
-  {
-    id: "conv-004",
-    author: {
-      name: "AI Frontier",
-      handle: "@aifrontier",
-      avatar: "AF"
-    },
-    topic: "ai",
-    tags: ["ai", "agents", "crypto"],
-    content:
-      "AI agents are becoming more autonomous. Where do you see the strongest use cases emerging?",
-    engagement: {
-      replies: 36,
-      likes: 319,
-      reposts: 51
-    },
-    age: "1h"
-  },
-
-  {
-    id: "conv-005",
-    author: {
-      name: "Web3 Daily",
-      handle: "@web3daily",
-      avatar: "WD"
-    },
-    topic: "web3",
-    tags: ["web3", "community", "builders"],
-    content:
-      "What makes a Web3 community actually sustainable beyond token incentives?",
-    engagement: {
-      replies: 29,
-      likes: 204,
-      reposts: 44
-    },
-    age: "1h"
-  },
-
-  {
-    id: "conv-006",
-    author: {
-      name: "Meme Terminal",
-      handle: "@memeterminal",
-      avatar: "MT"
-    },
-    topic: "memecoin",
-    tags: ["memecoin", "community", "culture"],
-    content:
-      "Memecoins are increasingly driven by community culture. What separates a lasting meme from a short-lived trend?",
-    engagement: {
-      replies: 67,
-      likes: 487,
-      reposts: 83
-    },
-    age: "2h"
-  },
-
-  {
-    id: "conv-007",
-    author: {
-      name: "Onchain Analyst",
-      handle: "@onchainanalyst",
-      avatar: "OA"
-    },
-    topic: "crypto",
-    tags: ["crypto", "onchain", "data"],
-    content:
-      "On-chain data is showing some interesting changes in market behavior. What metrics are you watching?",
-    engagement: {
-      replies: 21,
-      likes: 173,
-      reposts: 29
-    },
-    age: "2h"
-  },
-
-  {
-    id: "conv-008",
-    author: {
-      name: "Protocol Labs",
-      handle: "@protocollabs",
-      avatar: "PL"
-    },
-    topic: "web3",
-    tags: ["web3", "protocol", "infrastructure"],
-    content:
-      "Infrastructure remains one of the most overlooked parts of Web3. Which areas need better developer tooling?",
-    engagement: {
-      replies: 15,
-      likes: 119,
-      reposts: 18
-    },
-    age: "3h"
-  }
-];
+const API_BASE_URL =
+  "https://xai-growth-bot.mhd-aldirahman-56.workers.dev";
 
 
 /* =========================================================
-   02. APPLICATION STATE
+   01. APPLICATION STATE
    ========================================================= */
 
 const state = {
@@ -193,7 +26,7 @@ const state = {
 
 
 /* =========================================================
-   03. DOM REFERENCES
+   02. DOM REFERENCES
    ========================================================= */
 
 const elements = {
@@ -215,11 +48,15 @@ const elements = {
 
 
 /* =========================================================
-   04. INITIALIZATION
+   03. INITIALIZATION
    ========================================================= */
 
 function init() {
-  if (!elements.form || !elements.topic || !elements.keyword) {
+  if (
+    !elements.form ||
+    !elements.topic ||
+    !elements.keyword
+  ) {
     console.error(
       "X Growth Bot: required DOM elements are missing."
     );
@@ -229,15 +66,18 @@ function init() {
 
   bindEvents();
 
-  state.topic = normalizeTopic(elements.topic.value);
-  state.keyword = elements.keyword.value.trim();
+  state.topic =
+    normalizeTopic(elements.topic.value);
+
+  state.keyword =
+    elements.keyword.value.trim();
 
   performSearch();
 }
 
 
 /* =========================================================
-   05. EVENT HANDLERS
+   04. EVENT HANDLERS
    ========================================================= */
 
 function bindEvents() {
@@ -266,9 +106,8 @@ function bindEvents() {
 function handleSearchSubmit(event) {
   event.preventDefault();
 
-  state.topic = normalizeTopic(
-    elements.topic.value
-  );
+  state.topic =
+    normalizeTopic(elements.topic.value);
 
   state.keyword =
     elements.keyword.value.trim();
@@ -278,9 +117,8 @@ function handleSearchSubmit(event) {
 
 
 function handleTopicChange() {
-  state.topic = normalizeTopic(
-    elements.topic.value
-  );
+  state.topic =
+    normalizeTopic(elements.topic.value);
 
   performSearch();
 }
@@ -300,7 +138,7 @@ function handleRetry() {
 
 
 /* =========================================================
-   06. SEARCH
+   05. SEARCH
    ========================================================= */
 
 async function performSearch() {
@@ -308,21 +146,23 @@ async function performSearch() {
   clearError();
 
   try {
-    /*
-     * Simulate network latency.
-     * This will later be replaced with an API request.
-     */
-    await delay(500);
+    const conversations =
+      await fetchConversations();
 
     const filteredResults =
-      searchConversations({
-        topic: state.topic,
-        keyword: state.keyword
-      });
+      searchConversations(
+        conversations,
+        {
+          topic: state.topic,
+          keyword: state.keyword
+        }
+      );
 
-    state.results = filteredResults;
+    state.results =
+      filteredResults;
 
     renderResults();
+
   } catch (error) {
     console.error(
       "X Growth Bot search error:",
@@ -330,8 +170,9 @@ async function performSearch() {
     );
 
     handleError(
-      "We couldn't process the search. Please try again."
+      "We couldn't load conversations from the backend."
     );
+
   } finally {
     setLoading(false);
   }
@@ -339,13 +180,152 @@ async function performSearch() {
 
 
 /* =========================================================
-   07. SEARCH ENGINE
+   06. BACKEND API
    ========================================================= */
 
-function searchConversations({
-  topic,
-  keyword
-}) {
+async function fetchConversations() {
+  const response =
+    await fetch(
+      `${API_BASE_URL}/api/conversations`,
+      {
+        method: "GET",
+        headers: {
+          Accept:
+            "application/json"
+        }
+      }
+    );
+
+  if (!response.ok) {
+    throw new Error(
+      `Backend returned HTTP ${response.status}`
+    );
+  }
+
+  const payload =
+    await response.json();
+
+  if (
+    !payload.success ||
+    !Array.isArray(payload.data)
+  ) {
+    throw new Error(
+      "Invalid backend response."
+    );
+  }
+
+  return payload.data.map(
+    normalizeBackendConversation
+  );
+}
+
+
+/* =========================================================
+   07. BACKEND DATA NORMALIZATION
+   ========================================================= */
+
+function normalizeBackendConversation(
+  conversation
+) {
+  return {
+    id:
+      conversation.id ||
+      crypto.randomUUID(),
+
+    author: {
+      name:
+        conversation.author ||
+        "Unknown",
+
+      handle:
+        conversation.handle ||
+        "@unknown",
+
+      avatar:
+        createAvatar(
+          conversation.author ||
+          "X"
+        )
+    },
+
+    topic:
+      normalizeTopic(
+        conversation.topic ||
+        "general"
+      ),
+
+    tags:
+      Array.isArray(
+        conversation.tags
+      )
+        ? conversation.tags
+        : [],
+
+    content:
+      conversation.content ||
+      "",
+
+    engagement: {
+      replies:
+        Number(
+          conversation.engagement?.replies ||
+          0
+        ),
+
+      likes:
+        Number(
+          conversation.engagement?.likes ||
+          0
+        ),
+
+      reposts:
+        Number(
+          conversation.engagement?.reposts ||
+          0
+        )
+    },
+
+    age:
+      conversation.age ||
+      "now"
+  };
+}
+
+
+function createAvatar(name) {
+  const parts =
+    String(name)
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+
+  if (parts.length === 0) {
+    return "X";
+  }
+
+  return parts
+    .slice(0, 2)
+    .map(
+      (part) =>
+        part
+          .charAt(0)
+          .toUpperCase()
+    )
+    .join("");
+}
+
+
+/* =========================================================
+   08. SEARCH ENGINE
+   ========================================================= */
+
+function searchConversations(
+  conversations,
+  {
+    topic,
+    keyword
+  }
+) {
   const normalizedTopic =
     normalizeTopic(topic);
 
@@ -359,37 +339,39 @@ function searchConversations({
     normalizedTopic === "all" ||
     normalizedTopic === "all-topics";
 
-  return CONVERSATIONS
-    .map((conversation) => {
-      const score =
-        calculateRelevance(
-          conversation,
-          normalizedTopic,
-          normalizedKeyword
-        );
-
-      return {
+  return conversations
+    .map(
+      (conversation) => ({
         ...conversation,
-        relevanceScore: score
-      };
-    })
-    .filter((conversation) => {
-      const matchesTopic =
-        showAllTopics ||
-        conversation.topic === normalizedTopic;
 
-      const matchesKeyword =
-        !normalizedKeyword ||
-        matchesKeywordSearch(
-          conversation,
-          normalizedKeyword
+        relevanceScore:
+          calculateRelevance(
+            conversation,
+            normalizedTopic,
+            normalizedKeyword
+          )
+      })
+    )
+    .filter(
+      (conversation) => {
+        const matchesTopic =
+          showAllTopics ||
+          conversation.topic ===
+            normalizedTopic;
+
+        const matchesKeyword =
+          !normalizedKeyword ||
+          matchesKeywordSearch(
+            conversation,
+            normalizedKeyword
+          );
+
+        return (
+          matchesTopic &&
+          matchesKeyword
         );
-
-      return (
-        matchesTopic &&
-        matchesKeyword
-      );
-    })
+      }
+    )
     .sort(
       (a, b) =>
         b.relevanceScore -
@@ -399,7 +381,7 @@ function searchConversations({
 
 
 /* =========================================================
-   08. RELEVANCE SCORING
+   09. RELEVANCE SCORING
    ========================================================= */
 
 function calculateRelevance(
@@ -423,10 +405,14 @@ function calculateRelevance(
 
   if (keyword) {
     const searchableText =
-      getSearchableText(conversation);
+      getSearchableText(
+        conversation
+      );
 
     if (
-      searchableText.includes(keyword)
+      searchableText.includes(
+        keyword
+      )
     ) {
       score += 30;
     }
@@ -436,19 +422,19 @@ function calculateRelevance(
         .split(/\s+/)
         .filter(Boolean);
 
-    keywordParts.forEach((part) => {
-      if (
-        searchableText.includes(part)
-      ) {
-        score += 5;
+    keywordParts.forEach(
+      (part) => {
+        if (
+          searchableText.includes(
+            part
+          )
+        ) {
+          score += 5;
+        }
       }
-    });
+    );
   }
 
-  /*
-   * Engagement contributes a small amount.
-   * Relevance remains more important than volume.
-   */
   const engagement =
     conversation.engagement.likes +
     conversation.engagement.reposts * 2 +
@@ -456,7 +442,9 @@ function calculateRelevance(
 
   score += Math.min(
     20,
-    Math.round(engagement / 50)
+    Math.round(
+      engagement / 50
+    )
   );
 
   return Math.min(
@@ -467,7 +455,7 @@ function calculateRelevance(
 
 
 /* =========================================================
-   09. KEYWORD SEARCH
+   10. KEYWORD SEARCH
    ========================================================= */
 
 function matchesKeywordSearch(
@@ -479,31 +467,25 @@ function matchesKeywordSearch(
       conversation
     );
 
-  /*
-   * Exact phrase match.
-   */
   if (
-    searchableText.includes(keyword)
+    searchableText.includes(
+      keyword
+    )
   ) {
     return true;
   }
 
-  /*
-   * Also support multiple words.
-   *
-   * Example:
-   * "crypto market"
-   *
-   * Both words must exist.
-   */
   const parts =
     keyword
       .split(/\s+/)
       .filter(Boolean);
 
   if (parts.length > 1) {
-    return parts.every((part) =>
-      searchableText.includes(part)
+    return parts.every(
+      (part) =>
+        searchableText.includes(
+          part
+        )
     );
   }
 
@@ -512,7 +494,7 @@ function matchesKeywordSearch(
 
 
 /* =========================================================
-   10. SEARCH HELPERS
+   11. SEARCH HELPERS
    ========================================================= */
 
 function getSearchableText(
@@ -538,7 +520,7 @@ function normalizeTopic(topic) {
 
 
 /* =========================================================
-   11. RENDERING
+   12. RENDERING
    ========================================================= */
 
 function renderResults() {
@@ -577,7 +559,7 @@ function renderResults() {
 
 
 /* =========================================================
-   12. CONVERSATION CARD
+   13. CONVERSATION CARD
    ========================================================= */
 
 function createConversationCard(
@@ -673,7 +655,6 @@ function createConversationCard(
     age
   );
 
-
   const content =
     document.createElement(
       "p"
@@ -685,7 +666,6 @@ function createConversationCard(
   content.textContent =
     conversation.content;
 
-
   const footer =
     document.createElement(
       "div"
@@ -693,7 +673,6 @@ function createConversationCard(
 
   footer.className =
     "conversation-card-footer";
-
 
   const metrics =
     document.createElement(
@@ -720,7 +699,6 @@ function createConversationCard(
     )
   );
 
-
   const relevance =
     document.createElement(
       "span"
@@ -732,12 +710,10 @@ function createConversationCard(
   relevance.textContent =
     `${conversation.relevanceScore}% relevant`;
 
-
   footer.append(
     metrics,
     relevance
   );
-
 
   article.append(
     header,
@@ -750,7 +726,7 @@ function createConversationCard(
 
 
 /* =========================================================
-   13. METRICS
+   14. METRICS
    ========================================================= */
 
 function createMetric(
@@ -784,7 +760,7 @@ function formatNumber(value) {
 
 
 /* =========================================================
-   14. UI STATE
+   15. UI STATE
    ========================================================= */
 
 function setLoading(
@@ -862,7 +838,7 @@ function updateResultCount(
 
 
 /* =========================================================
-   15. ERROR HANDLING
+   16. ERROR HANDLING
    ========================================================= */
 
 function handleError(
@@ -901,24 +877,6 @@ function clearError() {
     elements.errorState.hidden =
       true;
   }
-}
-
-
-/* =========================================================
-   16. UTILITIES
-   ========================================================= */
-
-function delay(
-  milliseconds
-) {
-  return new Promise(
-    (resolve) => {
-      window.setTimeout(
-        resolve,
-        milliseconds
-      );
-    }
-  );
 }
 
 
